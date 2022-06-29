@@ -1,5 +1,6 @@
 import { useNavigate, TitleBar, Loading } from '@shopify/app-bridge-react';
 import { Card, EmptyState, Layout, Page, SkeletonBodyText } from '@shopify/polaris';
+import { CustomerCard, ProductCard } from '../components';
 
 export default function HomePage() {
   /*
@@ -12,9 +13,17 @@ export default function HomePage() {
   /*
     These are mock values. Setting these values lets you preview the loading markup and the empty state.
   */
-    const isLoading = true;
-    const isRefetching = false;
-    // const QRCodes = []
+    const isLoading = false;
+    const isRefetching = true;
+    const Customers = ['yes'];
+    const customerMarkup = Customers?.length ? (
+      <CustomerCard Customers={Customers} loading={isRefetching} />
+    ): null;
+
+    const Products = ['yes'];
+    const productsMarkup = Products?.length ? (
+      <ProductCard Products = {Products} loading={isRefetching} />
+    ): null;
   
     /* loadingMarkup uses the loading component from AppBridge and components from Polaris  */
   const loadingMarkup = isLoading ? (
@@ -26,14 +35,14 @@ export default function HomePage() {
 
   /* Use Polaris Card and EmptyState components to define the contents of the empty state */
   const emptyStateMarkup =
-    !isLoading ? (
+    !isLoading && (!Customers?.length || !Products?.length) ? (
     // !isLoading && !QRCodes?.length ? (
       <Card sectioned>
         <EmptyState
-          heading="Update customer/product data"
+          heading="Get customer/product data"
           /* This button will update the customer and product data */
           action={{
-            content: 'Update the data',
+            content: 'Get the data',
             // onAction () => navigate('/qrcodes/new'),
             onAction: () => console.log('action'),
           }}
@@ -63,6 +72,8 @@ export default function HomePage() {
         <Layout.Section>
           {loadingMarkup}
           {emptyStateMarkup}
+          {customerMarkup}
+          {productsMarkup}
         </Layout.Section>
       </Layout>
     </Page>
