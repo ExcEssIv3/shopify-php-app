@@ -62,7 +62,7 @@ export function ProductCard() {
         isLoading,
         isRefetching
     } = useAppQuery({
-        url: '/api/product'
+        url: '/api/products'
     });
 
     if (isLoading || isRefetching) {

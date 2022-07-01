@@ -15,5 +15,7 @@ yarn.lock
 
 **/node_modules
 
+secret-key.txt
+
 .idea
 .vscode
