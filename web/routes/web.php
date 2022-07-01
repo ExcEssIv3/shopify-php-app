@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\Product;
+use App\Models\Variant;
+
 use App\Lib\EnsureBilling;
 use App\Models\Session;
 use Illuminate\Http\Request;
@@ -132,6 +136,7 @@ Route::post('/api/webhooks', function (Request $request) {
         $topic = $request->header(HttpHeaders::X_SHOPIFY_TOPIC, '');
 
         $response = Registry::process($request->header(), $request->getContent());
+
         if (!$response->isSuccess()) {
             Log::error("Failed to process '$topic' webhook: {$response->getErrorMessage()}");
             return response()->json(['message' => "Failed to process '$topic' webhook"], 500);
@@ -141,3 +146,120 @@ Route::post('/api/webhooks', function (Request $request) {
         return response()->json(['message' => "Got an exception when handling '$topic' webhook"], 500);
     }
 });
+
+// my routes
+
+Route::get('/api/customers', function (Request $request) {
+    return Customer::orderBy('created_at', 'asc')->get();
+})->middleware('shopify.auth:online');
+
+Route::get('/api/products', function (Request $request) {
+    return Product::orderBy('created_at', 'asc')->get();
+})->middleware('shopify.auth:online');
+
+Route::get('/api/product/{id}', function(Request $request, $id) {
+    return Variant::get();
+    // return "ID RESPONSE: $id";
+})->middleware('shopify.auth:online');
+
+Route::get('/api/customers/update', function(Request $request) {
+    /** @var AuthSession */
+    $session = $request->get('shopifySession');
+
+    $client = new Rest($session->getShop(), $session->getAccessToken());
+    $customers = $client->get('/admin/api/2022-04/customers.json')->getDecodedBody();
+
+    if (gettype($customers) == 'array') {
+        $customers = (array) $customers;
+        foreach($customers['customers'] as $customer) {
+            $db_customer = Customer::where('customer_id', $customer['id'])->first();
+            if (!is_null($db_customer)) {
+                $db_customer->first_name = $customer['first_name'];
+                $db_customer->last_name = $customer['last_name'];
+                $db_customer->email = $customer['email'];
+                $db_customer->num_orders = $customer['orders_count'];
+                $db_customer->net_sales = $customer['total_spent'];
+                $db_customer->save();
+            } else {
+                $new_customer = new Customer;
+                $new_customer->customer_id = $customer['id'];
+                $new_customer->first_name = $customer['first_name'];
+                $new_customer->last_name = $customer['last_name'];
+                $new_customer->email = $customer['email'];
+                $new_customer->num_orders = $customer['orders_count'];
+                $new_customer->net_sales = $customer['total_spent'];
+                $new_customer->save();
+            }
+        }
+
+        return response('customer data updated', 201);
+    } else if (is_null($customers)) {
+        return response('not found', 400);
+    } else {
+        Log::error("customers is a string: {$customers}");
+        return response('customers is a string', 500);
+}
+
+    // Log::debug('CUSTOMERS PRINT: ' . var_export($customers, true));
+
+})->middleware('shopify.auth:online');
+
+Route::get('/api/products/update', function(Request $request) {
+    /** @var AuthSession */
+    $session = $request->get('shopifySession');
+
+    $client = new Rest($session->getShop(), $session->getAccessToken());
+    $products = $client->get('products')->getDecodedBody();
+
+    if (gettype($products) == 'array') {
+        $products = (array) $products;
+        foreach($products['products'] as $product) {
+            $db_product = Product::where('product_id', $product['id'])->first();
+            if (!is_null($db_product)) {
+                $db_product->title = $product['title'];
+                $db_product->vendor = $product['vendor'];
+                $db_product->type = $product['product_type'];
+                $db_product->price = $product['variants'][0]['price'];
+                $db_product->has_only_default_variant = (sizeof($product['variants']) > 0);
+                $db_product->save();
+            } else {
+                $new_product = new Product;
+                $new_product->product_id = $product['id'];
+                $new_product->title = $product['title'];
+                $new_product->vendor = $product['vendor'];
+                $new_product->type = $product['product_type'];
+                $new_product->price = $product['variants'][0]['price'];
+                $new_product->has_only_default_variant = (sizeof($product['variants']) > 0);
+                $new_product->save();
+            }
+
+            foreach($product['variants'] as $variant) {
+                $db_variant = Variant::where('variant_id', $variant['id'])->first();
+                if (!is_null($db_variant)) {
+                    $db_variant->title = $variant['title'];
+                    $db_variant->vendor = $product['vendor'];
+                    $db_variant->type = $product['product_type'];
+                    $db_variant->price = $variant['price'];
+                    $db_variant->save();
+                } else {
+                    $new_variant = new Variant;
+                    $new_variant->variant_id = $variant['id'];
+                    $new_variant->parent_id = $variant['product_id'];
+                    $new_variant->title = $variant['title'];
+                    $new_variant->vendor = $product['vendor'];
+                    $new_variant->type = $product['product_type'];
+                    $new_variant->price = $variant['price'];
+                    $new_variant->save();
+                }
+            }
+        }
+
+        return response('products data updated', 201);
+    } else if (is_null($products)) {
+        return response('not found', 400);
+    } else {
+        Log::error("products is a string: {$products}");
+        return response('products is a string', 500);
+    }
+
+})->middleware('shopify.auth:online');

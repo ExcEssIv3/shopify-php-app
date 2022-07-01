@@ -1,6 +1,8 @@
 import { useNavigate, TitleBar, Loading } from '@shopify/app-bridge-react';
 import { Card, EmptyState, Layout, Page, SkeletonBodyText } from '@shopify/polaris';
 import { CustomerCard, ProductCard } from '../components';
+import { useAppQuery } from '../hooks';
+
 
 export default function HomePage() {
   /*
@@ -13,29 +15,40 @@ export default function HomePage() {
   /*
     These are mock values. Setting these values lets you preview the loading markup and the empty state.
   */
-    const isLoading = false;
-    const isRefetching = true;
-    const Customers = ['yes'];
-    const customerMarkup = Customers?.length ? (
-      <CustomerCard Customers={Customers} loading={isRefetching} />
-    ): null;
+    // const customerIsLoading = false;
+    // const customerIsRefetching = true;
+    // const Customers = ['yes'];
+    // const customerMarkup = Customers?.length ? (
+    //   <CustomerCard Customers={Customers} loading={customerIsRefetching} />
+    // ): null;
 
-    const Products = ['yes'];
-    const productsMarkup = Products?.length ? (
-      <ProductCard Products = {Products} loading={isRefetching} />
-    ): null;
+    // useAppQuery({
+    //   url: "api/products/update"
+    // });
+
+    // useAppQuery({
+    //   url: "api/webhooks"
+    // });
+
+    // });
+    // const Products = ['yes']
+    // const productIsRefetching = false;
+    // let productsMarkup = Products?.length ? (
+    //   <ProductCard data={Products} loading={productIsRefetching} />
+    // ): null;
   
     /* loadingMarkup uses the loading component from AppBridge and components from Polaris  */
-  const loadingMarkup = isLoading ? (
-    <Card sectioned>
-      <Loading />
-      <SkeletonBodyText />
-    </Card>
-  ) : null;
+  // const loadingMarkup = isLoading ? (
+  //   <Card sectioned>
+  //     <Loading />
+  //     <SkeletonBodyText />
+  //   </Card>
+  // ) : null;
 
   /* Use Polaris Card and EmptyState components to define the contents of the empty state */
   const emptyStateMarkup =
-    !isLoading && (!Customers?.length || !Products?.length) ? (
+    (false) ? (
+    // !isProductLoading && (!Customers?.length || !Products?.length) ? (
     // !isLoading && !QRCodes?.length ? (
       <Card sectioned>
         <EmptyState
@@ -43,8 +56,11 @@ export default function HomePage() {
           /* This button will update the customer and product data */
           action={{
             content: 'Get the data',
-            // onAction () => navigate('/qrcodes/new'),
-            onAction: () => console.log('action'),
+            onAction: () => {
+              useAppQuery({
+                url: "api/products/update"
+              });
+            },
           }}
           image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
         >
@@ -60,20 +76,15 @@ export default function HomePage() {
   */
   return (
     <Page>
-      <TitleBar
-        title="Customer and Product Data"
-        primaryAction={{
-          content: 'Update customer/product data',
-            // onAction () => navigate('/qrcodes/new'),
-            onAction: () => console.log('action'),
-        }}
-      />
       <Layout>
         <Layout.Section>
-          {loadingMarkup}
-          {emptyStateMarkup}
-          {customerMarkup}
-          {productsMarkup}
+          <ProductCard></ProductCard>
+          <CustomerCard></CustomerCard>
+          {/* {loadingMarkup} */}
+          {/* {emptyStateMarkup}
+          {customerMarkup} */}
+          {/* {productsMarkup} */}
+          {/* <ProductsCard/> */}
         </Layout.Section>
       </Layout>
     </Page>
