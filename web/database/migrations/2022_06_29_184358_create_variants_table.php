@@ -22,8 +22,6 @@ class CreateVariantsTable extends Migration
             $table->string('type');
             $table->decimal('price');
             $table->timestamps();
-
-            // $table->foreignId('parent_id')->references('product_id')->on('products');
         });
     }
 

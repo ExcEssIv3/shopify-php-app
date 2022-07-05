@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\URL;
 use Shopify\Context;
 use Shopify\Webhooks\Registry;
 use Shopify\Webhooks\Topics;
-use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {

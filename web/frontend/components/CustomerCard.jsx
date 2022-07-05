@@ -20,8 +20,6 @@ export function CustomerCard() {
         )
     }
 
-    console.log(data);
-
     let rows = [];
 
     data.forEach((dataPiece) => {
@@ -33,11 +31,6 @@ export function CustomerCard() {
             dataPiece.net_sales
         ])
     });
-
-    let old = [
-        ["Seth", "Rowland", "sethr@dckap.com", 6, 60.78],
-        ["Santhosh", "R", "santhoshr@dckap.com", 8, 21.89]
-    ];
 
     return (
         <Card title="Customers">

@@ -15,7 +15,6 @@ class ProductCreated implements Handler
     public function handle(string $topic, string $shop, array $body): void
     {
         Log::debug("Product was created from $shop - updating product table.");
-        // Log::debug("PRODUCT BODY: " . var_export($body, true));
 
         $new_product = new Product;
         $new_product->product_id = $body['id'];
@@ -27,23 +26,14 @@ class ProductCreated implements Handler
         $new_product->save();
 
         foreach($body['variants'] as $variant) {
-            // $db_variant = Variant::where('variant_id', $variant['id'])->first();
-            // if (!is_null($db_variant)) {
-            //     $db_variant->title = $variant['title'];
-            //     $db_variant->vendor = $body['vendor'];
-            //     $db_variant->type = $body['product_type'];
-            //     $db_variant->price = $variant['price'];
-            //     $db_variant->save();
-            // } else {
-                $new_variant = new Variant;
-                $new_variant->variant_id = $variant['id'];
-                $new_variant->parent_id = $variant['product_id'];
-                $new_variant->title = $variant['title'];
-                $new_variant->vendor = $body['vendor'];
-                $new_variant->type = $body['product_type'];
-                $new_variant->price = $variant['price'];
-                $new_variant->save();
-            // }
+            $new_variant = new Variant;
+            $new_variant->variant_id = $variant['id'];
+            $new_variant->parent_id = $variant['product_id'];
+            $new_variant->title = $variant['title'];
+            $new_variant->vendor = $body['vendor'];
+            $new_variant->type = $body['product_type'];
+            $new_variant->price = $variant['price'];
+            $new_variant->save();
         }
     }
 }

@@ -72,20 +72,15 @@ Route::get('/api/auth', function (Request $request) {
         ['App\Lib\CookieHandler', 'saveShopifyCookie'],
     );
 
-    Log::debug('INSTALL URL: ' . $installUrl);
-
     return redirect($installUrl);
 });
 
 Route::get('/api/auth/callback', function (Request $request) {
-    Log::debug('CALLBACK 1');
     $session = OAuth::callback(
         $request->cookie(),
         $request->query(),
         ['App\Lib\CookieHandler', 'saveShopifyCookie'],
     );
-
-    Log::debug('CALLBACK 2');
 
     $host = $request->query('host');
     $shop = Utils::sanitizeShopDomain($request->query('shop'));
@@ -269,8 +264,6 @@ Route::get('/api/customers/update', function(Request $request) {
         Log::error("customers is a string: {$customers}");
         return response('customers is a string', 500);
 }
-
-    // Log::debug('CUSTOMERS PRINT: ' . var_export($customers, true));
 
 })->middleware('shopify.auth:online');
 
