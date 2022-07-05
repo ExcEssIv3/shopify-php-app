@@ -1,14 +1,39 @@
-import { Card, DataTable } from "@shopify/polaris";
-// import React from "react";
+import { Card, DataTable, SkeletonBodyText } from "@shopify/polaris";
+import { Loading } from '@shopify/app-bridge-react';
+import { useAppQuery } from "../hooks";
 
-export function CustomerCard({ Customers, loading}) {
-    const rows = [
-        ["Seth", "Rowland", "sethr@dckap.com", 6, 60.78],
-        ["Santhosh", "R", "santhoshr@dckap.com", 8, 21.89]
-    ];
+export function CustomerCard() {
+    const {
+        data,
+        isLoading,
+        isRefetching
+    } = useAppQuery({
+        url: "api/customers"
+    });
+
+    if (isLoading || isRefetching) {
+        return (
+            <Card sectioned title="Customers">
+                <Loading />
+                <SkeletonBodyText />
+            </Card>
+        )
+    }
+
+    let rows = [];
+
+    data.forEach((dataPiece) => {
+        rows.push([
+            dataPiece.first_name,
+            dataPiece.last_name,
+            dataPiece.email,
+            dataPiece.num_orders,
+            dataPiece.net_sales
+        ])
+    });
 
     return (
-        <Card>
+        <Card title="Customers">
             <DataTable
                 columnContentTypes = {[
                     "text",
@@ -25,7 +50,7 @@ export function CustomerCard({ Customers, loading}) {
                     "Net sales"
                 ]}
                 rows={rows}
-                loading={loading}
+                loading={isLoading}
             />
         </Card>
     )

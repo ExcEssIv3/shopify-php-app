@@ -1,24 +1,46 @@
-import { Link, Card, DataTable } from "@shopify/polaris";
-// import React from "react";
+import { Link, Card, DataTable, SkeletonBodyText } from "@shopify/polaris";
+import { Loading } from '@shopify/app-bridge-react';
+import { useAppQuery } from "../hooks";
 
-export function ProductCard({ Products, loading}) {
-    const rows = [
-        [
+export function ProductCard() {
+    const {
+        data,
+        isLoading,
+        isRefetching
+    } = useAppQuery({
+        url: '/api/products'
+    });
+
+    if (isLoading || isRefetching) {
+        return (
+            <Card sectioned title="Product">
+                <Loading />
+                <SkeletonBodyText />
+            </Card>
+        );
+        
+    }
+
+    let rows = [];
+
+    data.forEach((dataPiece) => {
+        const url = `https://dckaptraining.myshopify.com/admin/apps/php-training/product/${dataPiece.product_id}`
+        rows.push([
             <Link
                 removeUnderline
-                url="https://dckaptraining.myshopify.com/admin/apps/php-training/product/high-priest"
+                url={url}
             >
-                High Priest
+                {dataPiece.title}
             </Link>,
-            "Vendor",
-            "Religious Leader",
-            10,
-            "false"
-        ],
-    ];
+            dataPiece.vendor,
+            dataPiece.type,
+            dataPiece.price,
+            dataPiece.has_only_default_variant
+        ])
+    });
 
     return (
-        <Card>
+        <Card sectioned title="Products">
             <DataTable
                 columnContentTypes = {[
                     "text",
@@ -35,7 +57,7 @@ export function ProductCard({ Products, loading}) {
                     "Has only default variant"
                 ]}
                 rows={rows}
-                loading={loading}
+                loading={isLoading}
             />
         </Card>
     )
