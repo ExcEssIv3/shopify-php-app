@@ -45,8 +45,7 @@ Route::fallback(function (Request $request) {
 });
 
 Route::get('/api/auth/toplevel', function (Request $request, Response $response) {
-    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
-    $shop = 'dckaptraining.myshopify.com';
+    $shop = Utils::sanitizeShopDomain($request->query('shop'));
 
     $response = new Response(view('top_level', [
         'apiKey' => Context::$API_KEY,
@@ -56,16 +55,11 @@ Route::get('/api/auth/toplevel', function (Request $request, Response $response)
 
     $response->withCookie(cookie()->forever('shopify_top_level_oauth', '', null, null, true, true, false, 'strict'));
 
-    // Log::debug('TOPLEVEL RESPONSE: ' . var_export($response, true));
-
     return $response;
 });
 
 Route::get('/api/auth', function (Request $request) {
-    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
-    $shop = 'dckaptraining.myshopify.com';
-
-    // Log::debug("AUTH REQUEST: " . var_export($request, true));
+    $shop = Utils::sanitizeShopDomain($request->query('shop'));
 
     if (!$request->hasCookie('shopify_top_level_oauth')) {
         return redirect("/api/auth/toplevel?shop=$shop");
@@ -94,8 +88,7 @@ Route::get('/api/auth/callback', function (Request $request) {
     Log::debug('CALLBACK 2');
 
     $host = $request->query('host');
-    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
-    $shop = 'dckaptraining.myshopify.com';
+    $shop = Utils::sanitizeShopDomain($request->query('shop'));
 
     $response = Registry::register('/api/webhooks', Topics::APP_UNINSTALLED, $shop, $session->getAccessToken());
     if ($response->isSuccess()) {
@@ -237,7 +230,6 @@ Route::get('/api/products', function (Request $request) {
 
 Route::get('/api/product/{id}', function(Request $request, $id) {
     return Variant::where('parent_id', $id)->get();
-    // return "ID RESPONSE: $id";
 })->middleware('shopify.auth:online');
 
 Route::get('/api/customers/update', function(Request $request) {

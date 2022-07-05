@@ -30,8 +30,6 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         //
-        Registry::addHandler(Topics::PRODUCTS_UPDATE, new ProductUpdated());
-
     }
 
     /**
