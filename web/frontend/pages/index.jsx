@@ -4,9 +4,10 @@ import { useAppQuery } from '../hooks';
 
 
 export default function HomePage() {
-  useAppQuery({
-    url: 'api/customers/update'
-  })
+  // useAppQuery({
+  //   // url: 'api/customers/update'
+  //   url: 'api/auth'
+  // });
   
   return (
     <Page>

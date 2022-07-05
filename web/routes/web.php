@@ -45,7 +45,8 @@ Route::fallback(function (Request $request) {
 });
 
 Route::get('/api/auth/toplevel', function (Request $request, Response $response) {
-    $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    $shop = 'dckaptraining.myshopify.com';
 
     $response = new Response(view('top_level', [
         'apiKey' => Context::$API_KEY,
@@ -55,11 +56,16 @@ Route::get('/api/auth/toplevel', function (Request $request, Response $response)
 
     $response->withCookie(cookie()->forever('shopify_top_level_oauth', '', null, null, true, true, false, 'strict'));
 
+    // Log::debug('TOPLEVEL RESPONSE: ' . var_export($response, true));
+
     return $response;
 });
 
 Route::get('/api/auth', function (Request $request) {
-    $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    $shop = 'dckaptraining.myshopify.com';
+
+    // Log::debug("AUTH REQUEST: " . var_export($request, true));
 
     if (!$request->hasCookie('shopify_top_level_oauth')) {
         return redirect("/api/auth/toplevel?shop=$shop");
@@ -72,18 +78,24 @@ Route::get('/api/auth', function (Request $request) {
         ['App\Lib\CookieHandler', 'saveShopifyCookie'],
     );
 
+    Log::debug('INSTALL URL: ' . $installUrl);
+
     return redirect($installUrl);
 });
 
 Route::get('/api/auth/callback', function (Request $request) {
+    Log::debug('CALLBACK 1');
     $session = OAuth::callback(
         $request->cookie(),
         $request->query(),
         ['App\Lib\CookieHandler', 'saveShopifyCookie'],
     );
 
+    Log::debug('CALLBACK 2');
+
     $host = $request->query('host');
-    $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    // $shop = Utils::sanitizeShopDomain($request->query('shop'));
+    $shop = 'dckaptraining.myshopify.com';
 
     $response = Registry::register('/api/webhooks', Topics::APP_UNINSTALLED, $shop, $session->getAccessToken());
     if ($response->isSuccess()) {
@@ -94,6 +106,72 @@ Route::get('/api/auth/callback', function (Request $request) {
                 print_r($response->getBody(), true)
         );
     }
+
+    // customer webhooks
+
+    $response = Registry::register('/api/webhooks', Topics::CUSTOMERS_CREATE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered CUSTOMERS_CREATE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register CUSTOMERS_CREATE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+
+    $response = Registry::register('/api/webhooks', Topics::CUSTOMERS_UPDATE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered CUSTOMERS_UPDATE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register CUSTOMERS_UPDATE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+
+    $response = Registry::register('/api/webhooks', Topics::CUSTOMERS_DELETE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered CUSTOMERS_DELETE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register CUSTOMERS_DELETE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+
+    // product webhooks
+
+    $response = Registry::register('/api/webhooks', Topics::PRODUCTS_CREATE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered PRODUCTS_CREATE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register PRODUCTS_CREATE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+    
+    $response = Registry::register('/api/webhooks', Topics::PRODUCTS_UPDATE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered PRODUCTS_UPDATE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register PRODUCTS_UPDATE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+
+    $response = Registry::register('/api/webhooks', Topics::PRODUCTS_DELETE, $shop, $session->getAccessToken());
+    if ($response->isSuccess()) {
+        Log::debug("Registered PRODUCTS_DELETE webhook for shop $shop");
+    } else {
+        Log::error(
+            "Failed to register PRODUCTS_DELETE webhook for shop $shop with response body: " .
+                print_r($response->getBody(), true)
+        );
+    }
+
+
 
     $redirectUrl = "?" . http_build_query(['host' => $host, 'shop' => $shop]);
     if (Config::get('shopify.billing.required')) {
@@ -158,7 +236,7 @@ Route::get('/api/products', function (Request $request) {
 })->middleware('shopify.auth:online');
 
 Route::get('/api/product/{id}', function(Request $request, $id) {
-    return Variant::get();
+    return Variant::where('parent_id', $id)->get();
     // return "ID RESPONSE: $id";
 })->middleware('shopify.auth:online');
 
@@ -220,7 +298,7 @@ Route::get('/api/products/update', function(Request $request) {
                 $db_product->vendor = $product['vendor'];
                 $db_product->type = $product['product_type'];
                 $db_product->price = $product['variants'][0]['price'];
-                $db_product->has_only_default_variant = (sizeof($product['variants']) > 0);
+                $db_product->has_only_default_variant = !(sizeof($product['variants']) > 1);
                 $db_product->save();
             } else {
                 $new_product = new Product;
@@ -229,7 +307,7 @@ Route::get('/api/products/update', function(Request $request) {
                 $new_product->vendor = $product['vendor'];
                 $new_product->type = $product['product_type'];
                 $new_product->price = $product['variants'][0]['price'];
-                $new_product->has_only_default_variant = (sizeof($product['variants']) > 0);
+                $new_product->has_only_default_variant = !(sizeof($product['variants']) > 1);
                 $new_product->save();
             }
 
